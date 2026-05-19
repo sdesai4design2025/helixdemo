@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Coming Soon — Helix Elevators</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --gold:  #1f3656;
+      --gold2: #1E73EC;
+      --dark:  #0a0a0a;
+      --red:   #ED3237;
+      --light: #f0ece4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--dark);
+      color: var(--light);
+      font-family: 'Montserrat', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── Vignette overlay ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.7) 100%);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* ── Shaft rails (left side) ── */
+    .shaft-left::before,
+    .shaft-left::after {
+      content: '';
+      position: fixed;
+      top: 0; bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        rgba(80,140,220,0.12) 15%,
+        rgba(80,140,220,0.12) 85%,
+        transparent 100%);
+      z-index: 1;
+    }
+    .shaft-left::before { left: calc(15% - 70px); }
+    .shaft-left::after  { left: calc(15% + 70px); }
+
+    /* ── Shaft rails (right side) ── */
+    .shaft-right::before,
+    .shaft-right::after {
+      content: '';
+      position: fixed;
+      top: 0; bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        rgba(80,140,220,0.12) 15%,
+        rgba(80,140,220,0.12) 85%,
+        transparent 100%);
+      z-index: 1;
+    }
+    .shaft-right::before { left: calc(85% - 70px); }
+    .shaft-right::after  { left: calc(85% + 70px); }
+
+    /* ── Fade mask at top so elevators vanish ── */
+    .fade-top {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 22vh;
+      background: linear-gradient(to bottom, var(--dark) 0%, transparent 100%);
+      z-index: 4;
+      pointer-events: none;
+    }
+    /* ── Fade mask at bottom ── */
+    .fade-bottom {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 22vh;
+      background: linear-gradient(to top, var(--dark) 0%, transparent 100%);
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    /*
+      Both elevators share a 14s loop.
+      Elevator A occupies the FIRST half  (0–50%  = 0–7s).
+      Elevator B occupies the SECOND half (50–100% = 7–14s).
+      Both start at opacity:0 so there is NO flash on load.
+    */
+
+    /* ── Elevator A: LEFT shaft, first half ── */
+    @keyframes riseA {
+      0%    { bottom: -18vh; opacity: 0; }        /* start hidden below */
+      4%    { bottom: -18vh; opacity: 0; }        /* brief hold, then fade in */
+      10%   { opacity: 1; }
+      40%   { opacity: 1; }
+      48%   { bottom: 110vh; opacity: 0; }        /* exit at top */
+      50%   { bottom: -18vh; opacity: 0; }        /* reset below, stay hidden */
+      100%  { bottom: -18vh; opacity: 0; }        /* hold hidden for B's turn */
+    }
+    .elevator-a {
+      position: fixed;
+      left: calc(15% - 60px);
+      width: 120px;
+      z-index: 3;
+      bottom: -18vh;
+      opacity: 0;
+      animation: riseA 14s cubic-bezier(0.45, 0.05, 0.35, 0.95) infinite;
+    }
+
+    /* ── Elevator B: RIGHT shaft, second half ── */
+    @keyframes riseB {
+      0%    { bottom: -18vh; opacity: 0; }        /* hold hidden for A's turn */
+      50%   { bottom: -18vh; opacity: 0; }        /* A just finished, B starts */
+      54%   { bottom: -18vh; opacity: 0; }
+      60%   { opacity: 1; }
+      90%   { opacity: 1; }
+      98%   { bottom: 110vh; opacity: 0; }        /* exit at top */
+      100%  { bottom: -18vh; opacity: 0; }        /* reset for next loop */
+    }
+    .elevator-b {
+      position: fixed;
+      left: calc(85% - 60px);
+      width: 120px;
+      z-index: 3;
+      bottom: -18vh;
+      opacity: 0;
+      animation: riseB 14s cubic-bezier(0.45, 0.05, 0.35, 0.95) infinite;
+    }
+
+    /* ── Blink indicator ── */
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.15; }
+    }
+    .blink { animation: blink 1s ease-in-out infinite; }
+
+    /* ── Gold horizontal rule ── */
+    .h-line {
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--gold) 30%, var(--gold) 70%, transparent);
+      opacity: 0.3;
+    }
+
+    /* ── Typography ── */
+    .display {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      line-height: 1;
+    }
+    .red-text {
+      background: var(--red);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Fade-up stagger ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .a1 { opacity: 0; animation: fadeUp 0.9s 0.3s ease forwards; }
+    .a2 { opacity: 0; animation: fadeUp 0.9s 0.6s ease forwards; }
+    .a3 { opacity: 0; animation: fadeUp 0.9s 0.9s ease forwards; }
+    .a4 { opacity: 0; animation: fadeUp 0.9s 1.2s ease forwards; }
+
+    /* ── Logo ── */
+    .logo-wrap {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-wrap img { height: 100%; width: auto; }
+
+    /* ── Cable lines above car ── */
+    .cable {
+      display: block;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Shaft rails -->
+  <div class="shaft-left"  style="position:fixed;inset:0;z-index:1;pointer-events:none;"></div>
+  <div class="shaft-right" style="position:fixed;inset:0;z-index:1;pointer-events:none;"></div>
+
+  <!-- Fade masks -->
+  <div class="fade-top"></div>
+  <div class="fade-bottom"></div>
+
+  <!-- ── Elevator A (LEFT) ── -->
+  <div class="elevator-a">
+    <svg viewBox="0 0 120 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="0" x2="40" y2="20" stroke="#4a7fc1" stroke-width="1" opacity="0.4"/>
+      <line x1="60" y1="0" x2="60" y2="20" stroke="#4a7fc1" stroke-width="1.4" opacity="0.5"/>
+      <line x1="80" y1="0" x2="80" y2="20" stroke="#4a7fc1" stroke-width="1" opacity="0.4"/>
+      <rect x="4" y="20" width="112" height="172" rx="2" fill="#0d1520" stroke="#2d5a9e" stroke-width="1" opacity="0.75"/>
+      <rect x="10" y="26" width="100" height="160" rx="1" fill="none" stroke="rgba(74,127,193,0.15)" stroke-width="0.7"/>
+      <line x1="60" y1="26" x2="60" y2="186" stroke="rgba(74,127,193,0.18)" stroke-width="0.8"/>
+      <rect x="11" y="27" width="48" height="158" fill="url(#bL)" opacity="0.6"/>
+      <rect x="61" y="27" width="48" height="158" fill="url(#bR)" opacity="0.6"/>
+      <rect x="4" y="20" width="112" height="16" rx="2" fill="#0d1828" stroke="#2d5a9e" stroke-width="0.8" opacity="0.9"/>
+      <circle cx="60" cy="28" r="4" fill="#4a7fc1" class="blink" opacity="0.7"/>
+      <circle cx="14" cy="34" r="1.5" fill="rgba(74,127,193,0.3)"/>
+      <circle cx="106" cy="34" r="1.5" fill="rgba(74,127,193,0.3)"/>
+      <circle cx="14" cy="178" r="1.5" fill="rgba(74,127,193,0.3)"/>
+      <circle cx="106" cy="178" r="1.5" fill="rgba(74,127,193,0.3)"/>
+      <line x1="4" y1="192" x2="116" y2="192" stroke="#2d5a9e" stroke-width="0.8" opacity="0.2"/>
+      <defs>
+        <linearGradient id="bL" x1="11" y1="0" x2="59" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#4a7fc1" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#4a7fc1" stop-opacity="0.02"/>
+        </linearGradient>
+        <linearGradient id="bR" x1="109" y1="0" x2="61" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#4a7fc1" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#4a7fc1" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+
+  <!-- ── Elevator B (RIGHT) ── -->
+  <div class="elevator-b">
+    <svg viewBox="0 0 120 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="0" x2="40" y2="20" stroke="#4a7fc1" stroke-width="1" opacity="0.4"/>
+      <line x1="60" y1="0" x2="60" y2="20" stroke="#4a7fc1" stroke-width="1.4" opacity="0.5"/>
+      <line x1="80" y1="0" x2="80" y2="20" stroke="#4a7fc1" stroke-width="1" opacity="0.4"/>
+      <rect x="4" y="20" width="112" height="172" rx="2" fill="#0d1520" stroke="#2d5a9e" stroke-width="1" opacity="0.75"/>
+      <rect x="10" y="26" width="100" height="160" rx="1" fill="none" stroke="rgba(74,127,193,0.15)" stroke-width="0.7"/>
+      <line x1="60" y1="26" x2="60" y2="186" stroke="rgba(74,127,193,0.18)" stroke-width="0.8"/>
+      <rect x="11" y="27" width="48" height="158" fill="url(#bL2)" opacity="0.6"/>
+      <rect x="61" y="27" width="48" height="158" fill="url(#bR2)" opacity="0.6"/>
+      <rect x="4" y="20" width="112" height="16" rx="2" fill="#0d1828" stroke="#2d5a9e" stroke-width="0.8" opacity="0.9"/>
+      <circle cx="60" cy="28" r="4" fill="#4a7fc1" class="blink" opacity="0.7" style="animation-delay:0.5s"/>
+      <circle cx="14" cy="34" r="1.5" fill="rgba(74,127,193,0.3)"/>
+      <circle cx="106" cy="34" r="1.5" fill="rgba(74,127,193,0.3)"/>
+      <circle cx="14" cy="178" r="1.5" fill="rgba(74,127,193,0.3)"/>
+      <circle cx="106" cy="178" r="1.5" fill="rgba(74,127,193,0.3)"/>
+      <line x1="4" y1="192" x2="116" y2="192" stroke="#2d5a9e" stroke-width="0.8" opacity="0.2"/>
+      <defs>
+        <linearGradient id="bL2" x1="11" y1="0" x2="59" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#4a7fc1" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#4a7fc1" stop-opacity="0.02"/>
+        </linearGradient>
+        <linearGradient id="bR2" x1="109" y1="0" x2="61" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#4a7fc1" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#4a7fc1" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+
+  <!-- ── MAIN CONTENT ── -->
+  <div class="relative z-10 flex flex-col items-center justify-center h-screen text-center px-6">
+
+    <!-- Logo -->
+    <div class="a1 logo-wrap mb-8">
+      <img src="helix-elevators-logo.svg" alt="Helix Elevators" style="height:80px;"/>
+    </div>
+
+    <!-- Divider -->
+    <div class="a2 h-line w-40 mx-auto mb-8"></div>
+
+    <!-- Headline -->
+    <h1 class="display red-text a3" style="font-size: clamp(3.6rem, 9vw, 8rem);">
+      Coming Soon
+    </h1>
+
+    <!-- Subline -->
+    <p class="a4 mt-5 text-[11px] md:text-[12px] tracking-[0.28em] uppercase text-stone-400 font-light">
+      Elevating Experiences to New Heights
+    </p>
+
+    <!-- Bottom strip -->
+    <div class="a4 absolute bottom-9 left-0 right-0 flex flex-col items-center gap-3">
+      <div class="h-line w-36 mx-auto"></div>
+      <span class="text-[9px] tracking-[0.32em] uppercase text-stone-700">We're on our way up</span>
+    </div>
+
+  </div>
+
+</body>
+</html>
